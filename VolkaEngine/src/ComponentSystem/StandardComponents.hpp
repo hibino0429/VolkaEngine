@@ -88,17 +88,39 @@ namespace ECS
 		Scale* sca;
 	};
 
+	//!@class Color
+	//!@brief 色を扱います
+	template<typename ColorType = Uint8>
+	struct Color final : public ComponentData
+	{
+		explicit Color() noexcept
+			: value(Vector4Type<ColorType>(0xFF, 0xFF, 0xFF, 0xFF))
+		{}
+		explicit Color(const ColorType r, const ColorType g, const ColorType b, const ColorType a = 0xFF) noexcept
+			: value(r, g, b, a)
+		{}
+		//!@brief 色の設定
+		[[noreturn]] void setColor(const Vector4Type<ColorType>& color) noexcept
+		{
+			value = color;
+		}
+		Vector4Type<ColorType> value;
+	};
 	//!@class Counter
 	//!@brief カウントを行います
 	class Counter final : public ComponentSystem
 	{
 	public:
 		explicit Counter()
-			: cnt(0.0f) , MaxCount(0.0f)
+			: MaxCount(0.0f)
 		{}
 		explicit Counter(const float maxCount)
 			: MaxCount(maxCount)
 		{}
+		[[noreturn]] void initialize() noexcept override
+		{
+			cnt = 0.0f;
+		}
 		[[noreturn]] void update() noexcept override
 		{
 			if (isMaxCount())
@@ -107,10 +129,14 @@ namespace ECS
 			}
 			++cnt;
 		}
+		[[noreturn]] void draw2D() noexcept override {}
+		[[noreturn]] void draw3D() noexcept override {}
+		//!@brief 最大のカウントかどうか
 		const bool isMaxCount() const noexcept
 		{
 			return cnt >= MaxCount;
 		}
+		//!@brief リセットします
 		[[noreturn]] void reset() noexcept
 		{
 			cnt = 0.0f;
@@ -135,7 +161,7 @@ namespace ECS
 		{
 			if (!entity->hasComponent<Counter>())
 			{
-				entity->addComponent<Counter>(maxCountSpan);
+				entity->addComponent<Counter>();
 			}
 			counter = &entity->getComponent<Counter>();
 		}
@@ -184,4 +210,35 @@ namespace ECS
 		static constexpr float DefaultGravity = 9.8f / 60.0f / 60.0f * 32.0f * 3.0f;
 		float value;
 	};
+
+	//!@class Screen
+	//!@brief スクリーンを扱います
+	class Screen final : public ComponentData
+	{
+	public:
+		explicit Screen() noexcept
+			: screenName("title"), pos(Vector2(0, 0)), size(Vector2(0, 0))
+		{}
+		explicit Screen(const std::string& screenTitle,const Vector2& screenSize) noexcept
+			: screenName(screenTitle),pos(Vector2(0,0)),size(screenSize)
+		{}
+		explicit Screen(const std::string& screenTitle,const Vector2& screenPos, const Vector2& screenSize) noexcept
+			: screenName(screenTitle),pos(screenPos), size(screenSize)
+		{}
+		//!@brief スクリーン名の設定
+		[[noreturn]] void setScreenName(const std::string& screenTitle) noexcept
+		{
+			screenName = screenTitle;
+		}
+		//!@brief スクリーンのサイズの設定
+		[[noreturn]] void setScreenSize(const Vector2& screenSize) noexcept
+		{
+			size = screenSize;
+		}
+	public:
+		std::string screenName;
+		Vector2 pos;
+		Vector2 size;
+	};
+
 }

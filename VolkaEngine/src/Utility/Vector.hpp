@@ -19,18 +19,20 @@ template<typename Type>
 class Vector2Type
 {
 public:
-	Vector2Type() :xValue(0), yValue(0) {};
-	Vector2Type(const Type x, const Type y)
+	Vector2Type() noexcept
+		:xValue(0), yValue(0)
+	{}
+	Vector2Type(const Type x, const Type y) noexcept
 		: xValue(x), yValue(y)
-	{};
-	Vector2Type(const Vector2Type& vector2)
+	{}
+	explicit Vector2Type(const Vector2Type& vector2) noexcept
 		: xValue(vector2.xValue), yValue(vector2.yValue)
-	{};
-	virtual Vector2Type() = default;
+	{}
+	virtual ~Vector2Type() = default;
 	//!@brief　オフセットした値のコピーを取得します
 	[[nodiscard]] const Vector2Type offsetCopy(const Type offsetX, const Type offsetY) const noexcept
 	{
-		return { xValue + offsetX,yValue + offsetY };
+		return Vector2Type( xValue + offsetX,yValue + offsetY );
 	}
 	//!@brief　オフセットした値を取得します
 	[[nodiscard]] const Vector2Type& offset(const Type offsetX, const Type offsetY) const noexcept
@@ -89,79 +91,73 @@ public:
 	[[nodiscard]] const Type nomalized() const noexcept
 	{
 		Type len = length();
-		return { xValue / len,yValue / len };
+		return Vector2Type( xValue / len,yValue / len );
 	}
 
 	[[nodiscard]] Vector2Type operator+() const noexcept
 	{
-		return { *this };
+		return *this;
 	}
 	[[nodiscard]] Vector2Type operator-() const noexcept
 	{
-		return { -xValue,-yValue };
+		return Vector2Type( -xValue,-yValue );
 	}
 	[[nodiscard]] Vector2Type operator+(const Vector2Type& vector2) const noexcept
 	{
-		return { xValue + vector2.xValue,yValue + vector2.yValue };
+		return Vector2Type( xValue + vector2.xValue,yValue + vector2.yValue );
 	}
 	[[nodiscard]] Vector2Type operator-(const Vector2Type& vector2) const noexcept
 	{
-		return { xValue - vector2.xValue,yValue - vector2.yValue };
+		return Vector2Type( xValue - vector2.xValue,yValue - vector2.yValue );
 	}
 	[[nodiscard]] Vector2Type operator*(const Vector2Type& vector2) const noexcept
 	{
-		return { xValue * vector2.xValue,yValue * vector2.yValue };
+		return Vector2Type( xValue * vector2.xValue,yValue * vector2.yValue );
 	}
 	[[nodiscard]] Vector2Type operator*(const Type& scale) const noexcept
 	{
-		return { xValue * scale,yValue * scale };
+		return Vector2Type( xValue * scale,yValue * scale );
 	}
-	[[nodiscard]] Vector2Type operator-(const Vector2Type& vector2) const throw(std::exception)
+	[[nodiscard]] Vector2Type operator/(const Vector2Type& vector2) const noexcept(false)
 	{
 		if (xValue == 0 || yValue == 0) { throw std::exception("0除算を行いました"); }
-		return { xValue / vector2.xValue,yValue / vector2.yValue };
+		return Vector2Type( xValue / vector2.xValue,yValue / vector2.yValue );
 	}
-	[[nodiscard]] Vector2Type operator-(const Type& scale) const throw(std::exception)
+	[[nodiscard]] Vector2Type operator/(const Type& scale) const noexcept(false)
 	{
 		if (xValue == 0 || yValue == 0) { throw std::exception("0除算を行いました"); }
-		return { xValue / scale,yValue / scale };
+		return Vector2Type( xValue / scale,yValue / scale );
 	}
-	[[nodiscard]] Vector2Type& operator=(const Vector2Type& vector2) const noexcept
+	[[noreturn]] void operator=(const Vector2Type& vector2) noexcept
 	{
 		xValue = vector2.xValue;
 		yValue = vector2.yValue;
-		return *this;
 	}
-	[[nodiscard]] Vector2Type& operator=(const Type& scale) const noexcept
+	[[noreturn]] void operator=(const Type& scale) noexcept
 	{
-		xValue += scale;
-		yValue += scale;
-		return *this;
+		xValue = scale;
+		yValue = scale;
 	}
-	[[nodiscard]] Vector2Type& operator+=(const Vector2Type& vector2) const noexcept
+	[[noreturn]] void operator+=(const Vector2Type& vector2) noexcept
 	{
 		xValue += vector2.xValue;
 		yValue += vector2.yValue;
-		return *this;
 	}
-	[[nodiscard]] Vector2Type& operator-=(const Vector2Type& vector2) const noexcept
+	[[noreturn]] void operator-=(const Vector2Type& vector2) noexcept
 	{
 		xValue -= vector2.xValue;
 		yValue -= vector2.yValue;
-		return *this;
 	}
-	[[nodiscard]] Vector2Type& operator*=(const Vector2Type& vector2) const noexcept
+	[[noreturn]] void operator*=(const Vector2Type& vector2) noexcept
 	{
 		xValue *= vector2.xValue;
 		yValue *= vector2.yValue;
-		return *this;
 	}
-	[[nodiscard]] Vector2Type& operator/=(const Vector2Type& vector2) const throw(std::exception)
+	[[noreturn]] void operator/=(const Vector2Type& vector2) noexcept(false)
 	{
 		if (xValue == 0 || yValue == 0) { throw std::exception("0除算を行いました"); }
 		xValue /= vector2.xValue;
 		yValue /= vector2.yValue;
-		return *this;
 	}
 	[[nodiscard]] const Type& operator()(const int index) const noexcept
 	{
@@ -196,18 +192,20 @@ template<typename Type>
 class Vector3Type
 {
 public:
-	Vector3Type() :xValue(0), yValue(0), zValue(0) {};
-	Vector3Type(const Type x, const Type y,const Type z)
+	Vector3Type() noexcept
+		:xValue(0), yValue(0), zValue(0)
+	{}
+	Vector3Type(const Type x, const Type y,const Type z) noexcept
 		: xValue(x), yValue(y),zValue(z)
-	{};
-	Vector3Type(const Vector3& vector3)
+	{}
+	Vector3Type(const Vector3Type& vector3) noexcept
 		: xValue(vector3.xValue), yValue(vector3.yValue),zValue(vector3.zValue)
-	{};
-	virtual Vector3Type() = default;
+	{}
+	virtual ~Vector3Type() = default;
 	//!@brief　オフセットした値のコピーを取得します
 	[[nodiscard]] const Vector3Type offsetCopy(const Type offsetX, const Type offsetY,const Type offsetZ) const noexcept
 	{
-		return { xValue + offsetX,yValue + offsetY ,zValue + offsetZ };
+		return Vector3Type( xValue + offsetX,yValue + offsetY ,zValue + offsetZ );
 	}
 	//!@brief　オフセットした値を取得します
 	[[nodiscard]] const Vector3Type& offset(const Type offsetX, const Type offsetY,const Type offsetZ) const noexcept
@@ -235,18 +233,18 @@ public:
 		return v1.xValue * v2.xValue + v1.yValue * v2.yValue + v1.zValue * v2.zValue;
 	}
 	//!@brief 外積を取得します
-	[[nodiscard]] const Vector3 closs(const Vector3Type& vector3) const noexcept
+	[[nodiscard]] const Vector3Type closs(const Vector3Type& vector3) const noexcept
 	{
-		return { yValue * vector3.zValue - zValue * vector3.yValue,
+		return Vector3Type( yValue * vector3.zValue - zValue * vector3.yValue,
 				 zValue * vector3.xValue - xValue * vector3.zValue,
-				 xValue * vector3.yValue - yValue * vector3.xValue, };
+				 xValue * vector3.yValue - yValue * vector3.xValue );
 	}
 	//!@brief 外積を取得します
 	[[nodiscard]] static Vector3Type closs(const Vector3Type& v1, const Vector3Type& v2) noexcept
 	{
-		return { v1.yValue * v2.zValue - v1.zValue * v2.yValue,
+		return Vector3Type( v1.yValue * v2.zValue - v1.zValue * v2.yValue,
 				 v1.zValue * v2.xValue - v1.xValue * v2.zValue,
-				 v1.xValue * v2.yValue - v1.yValue * v2.xValue, };
+				 v1.xValue * v2.yValue - v1.yValue * v2.xValue );
 	}
 	//!@brief 2点間の距離を取得します
 	[[nodiscard]] const Type getDistance(const Vector3Type& vector3) const noexcept
@@ -262,7 +260,7 @@ public:
 		return sqrtf(xValue * xValue + yValue * yValue,zValue * zValue);
 	}
 	//!@brief 自身を正規化した値を取得します
-	[[nodiscard]] const Type& nomalize() const noexcept
+	[[nodiscard]] const Type& nomalize() noexcept
 	{
 		Type len = length();
 		xValue /= len;
@@ -274,85 +272,79 @@ public:
 	[[nodiscard]] const Type nomalized() const noexcept
 	{
 		Type len = length();
-		return { xValue / len,yValue / len,zValue / len };
+		return Vector3Type( xValue / len,yValue / len,zValue / len );
 	}
 
 	[[nodiscard]] Vector3Type operator+() const noexcept
 	{
-		return { *this };
+		return *this;
 	}
 	[[nodiscard]] Vector3Type operator-() const noexcept
 	{
-		return { -xValue,-yValue ,-zValue};
+		return Vector3Type( -xValue, -yValue ,-zValue );
 	}
 	[[nodiscard]] Vector3Type operator+(const Vector3Type& vector3) const noexcept
 	{
-		return { xValue + vector3.xValue,yValue + vector3.yValue ,zValue + vector3.zValue};
+		return Vector3Type( xValue + vector3.xValue,yValue + vector3.yValue ,zValue + vector3.zValue );
 	}
 	[[nodiscard]] Vector3Type operator-(const Vector3Type& vector3) const noexcept
 	{
-		return { xValue - vector3.xValue,yValue - vector3.yValue ,zValue * vector3.zValue };
+		return Vector3Type( xValue - vector3.xValue,yValue - vector3.yValue ,zValue * vector3.zValue );
 	}
 	[[nodiscard]] Vector3Type operator*(const Vector3Type& vector3) const noexcept
 	{
-		return { xValue * vector3.xValue,yValue * vector3.yValue ,zValue * vector3.zValue };
+		return Vector3Type( xValue * vector3.xValue,yValue * vector3.yValue ,zValue * vector3.zValue );
 	}
 	[[nodiscard]] Vector3Type operator*(const Type& scale) const noexcept
 	{
-		return { xValue * scale,yValue * scale ,zValue * scale };
+		return Vector3Type( xValue * scale,yValue * scale ,zValue * scale );
 	}
-	[[nodiscard]] Vector3Type operator-(const Vector3Type& vector3) const throw(std::exception)
+	[[nodiscard]] Vector3Type operator/(const Vector3Type& vector3) const noexcept(false)
 	{
 		if (xValue == 0 || yValue == 0 || zValue == 0) { throw std::exception("0除算を行いました"); }
-		return { xValue / vector3.xValue,yValue / vector3.yValue,zValue / vector3.zValue };
+		return Vector3Type( xValue / vector3.xValue,yValue / vector3.yValue,zValue / vector3.zValue );
 	}
-	[[nodiscard]] Vector3Type operator-(const Type& scale) const throw(std::exception)
+	[[nodiscard]] Vector3Type operator/(const Type& scale) const noexcept(false)
 	{
 		if (xValue == 0 || yValue == 0 || zValue == 0) { throw std::exception("0除算を行いました"); }
-		return { xValue / scale,yValue / scale ,zValue / scale };
+		return Vector3Type( xValue / scale,yValue / scale ,zValue / scale );
 	}
-	[[nodiscard]] Vector3Type& operator=(const Vector3Type& vector3) const noexcept
+	[[noreturn]] void operator=(const Vector3Type& vector3) noexcept
 	{
 		xValue = vector3.xValue;
 		yValue = vector3.yValue;
 		zValue = vector3.zValue;
-		return *this;
 	}
-	[[nodiscard]] Vector3Type& operator=(const Type& scale) const noexcept
+	[[noreturn]] void operator=(const Type& scale) noexcept
 	{
 		xValue += scale;
 		yValue += scale;
 		zValue += scale;
-		return *this;
 	}
-	[[nodiscard]] Vector3Type& operator+=(const Vector3Type& vector3) const noexcept
+	[[noreturn]] void operator+=(const Vector3Type& vector3) noexcept
 	{
 		xValue += vector3.xValue;
 		yValue += vector3.yValue;
 		zValue += vector3.zValue;
-		return *this;
 	}
-	[[nodiscard]] Vector3Type& operator-=(const Vector3Type& vector3) const noexcept
+	[[noreturn]] void operator-=(const Vector3Type& vector3) noexcept
 	{
 		xValue -= vector3.xValue;
 		yValue -= vector3.yValue;
-		zValue -= vector3.zValue:
-		return *this;
+		zValue -= vector3.zValue;
 	}
-	[[nodiscard]] Vector3Type& operator*=(const Vector3Type& vector3) const noexcept
+	[[noreturn]] void operator*=(const Vector3Type& vector3) noexcept
 	{
 		xValue *= vector3.xValue;
 		yValue *= vector3.yValue;
-		zValue *= vector3.zValue:
-		return *this;
+		zValue *= vector3.zValue;
 	}
-	[[nodiscard]] Vector3Type& operator/=(const Vector3Type& vector3) const throw(std::exception)
+	[[noreturn]] void operator/=(const Vector3Type& vector3) noexcept(false)
 	{
 		if (xValue == 0 || yValue == 0 || zValue == 0) { throw std::exception("0除算を行いました"); }
 		xValue /= vector3.xValue;
 		yValue /= vector3.yValue;
-		zValue /= vector3.zValue:
-		return *this;
+		zValue /= vector3.zValue;
 	}
 	[[nodiscard]] const Type& operator()(const int index) const noexcept
 	{
@@ -389,21 +381,23 @@ template<typename Type>
 class Vector4Type
 {
 public:
-	Vector4Type() :xValue(0), yValue(0), zValue(0),wValue(0) {};
-	Vector4Type(const Type x, const Type y, const Type z,const Type w)
+	Vector4Type() noexcept
+		:xValue(0), yValue(0), zValue(0),wValue(0)
+	{}
+	Vector4Type(const Type x, const Type y, const Type z,const Type w) noexcept
 		: xValue(x), yValue(y), zValue(z),wValue(w)
 	{}
-	Vector4Type(const Vector4Type& vector4)
+	Vector4Type(const Vector4Type& vector4) noexcept
 		: xValue(vector4.xValue), yValue(vector4.yValue), zValue(vector4.zValue),wValue(vector4.wValue)
 	{}
-	Vector4Type(const Vector3& vector3, const Type w = 0)
-		: xValue(vector3.xValue), yValue(vector3.yValue), zValue(vector3.zValue), wValue(w)
+	Vector4Type(const Vector3Type<Type>& vector3, const Type w = 0) noexcept
+		: xValue(vector3.xValue), yValue(vector3.yValue), zValue(vector3.zValue), wValue(w) 
 	{}
-	virtual Vector4Type() = default;
+	virtual ~Vector4Type() = default;
 	//!@brief　オフセットした値のコピーを取得します
 	[[nodiscard]] const Vector4Type offsetCopy(const Type offsetX, const Type offsetY, const Type offsetZ,const Type offsetW) const noexcept
 	{
-		return { xValue + offsetX,yValue + offsetY ,zValue + offsetZ ,wValue = offsetW};
+		return Vector4Type( xValue + offsetX,yValue + offsetY ,zValue + offsetZ ,wValue = offsetW );
 	}
 	//!@brief　オフセットした値を取得します
 	[[nodiscard]] const Vector4Type& offset(const Type offsetX, const Type offsetY, const Type offsetZ,const Type offsetW) const noexcept
@@ -420,34 +414,34 @@ public:
 		xValue = 0;
 		yValue = 0;
 		zValue = 0;
-		wValue 
+		wValue = 0;
 	}
 	//!@brief 内積を取得します
-	[[nodiscard]] const Type dot(const Vector3Type& vector3) const noexcept
+	[[nodiscard]] const Type dot(const Vector3Type<Type>& vector3) const noexcept
 	{
 		return xValue * vector3.xValue + yValue * vector3.yValue + zValue * vector3.zValue;
 	}
 	//!@brief 内積を取得します
-	[[nodiscard]] static Type dot(const Vector3Type& v1, const Vector3& v2) noexcept
+	[[nodiscard]] static Type dot(const Vector3Type<Type>& v1, const Vector3Type<Type>& v2) noexcept
 	{
 		return v1.xValue * v2.xValue + v1.yValue * v2.yValue + v1.zValue * v2.zValue;
 	}
 	//!@brief 外積を取得します
-	[[nodiscard]] const Vector3Type closs(const Vector3Type& vector3) const noexcept
+	[[nodiscard]] const Vector3Type<Type> closs(const Vector3Type<Type>& vector3) const noexcept
 	{
-		return { yValue * vector3.zValue - zValue * vector3.yValue,
+		return Vector3Type<Type>( yValue * vector3.zValue - zValue * vector3.yValue,
 				 zValue * vector3.xValue - xValue * vector3.zValue,
-				 xValue * vector3.yValue - yValue * vector3.xValue, };
+				 xValue * vector3.yValue - yValue * vector3.xValue );
 	}
 	//!@brief 外積を取得します
-	[[nodiscard]] static Vector3Type closs(const Vector3Type& v1, const Vector3& v2) noexcept
+	[[nodiscard]] static Vector3Type<Type> closs(const Vector3Type<Type>& v1, const Vector3Type<Type>& v2) noexcept
 	{
-		return { v1.yValue * v2.zValue - v1.zValue * v2.yValue,
+		return Vector3Type<Type>( v1.yValue * v2.zValue - v1.zValue * v2.yValue,
 				 v1.zValue * v2.xValue - v1.xValue * v2.zValue,
-				 v1.xValue * v2.yValue - v1.yValue * v2.xValue, };
+				 v1.xValue * v2.yValue - v1.yValue * v2.xValue );
 	}
 	//!@brief 2点間の距離を取得します
-	[[nodiscard]] const Type getDistance(const VVector3Typeector3& vector3) const noexcept
+	[[nodiscard]] const Type getDistance(const Vector3Type<Type>& vector3) const noexcept
 	{
 		const Type xDistance = xValue - vector3.xValue;
 		const Type yDistance = yValue - vector3.yValue;
@@ -460,7 +454,7 @@ public:
 		return sqrtf(xValue * xValue + yValue * yValue, zValue * zValue);
 	}
 	//!@brief 自身を正規化した値を取得します
-	[[nodiscard]] const Type& nomalize() const noexcept
+	[[nodiscard]] const Vector4Type& nomalize() const noexcept
 	{
 		Type len = length();
 		xValue /= len;
@@ -469,94 +463,88 @@ public:
 		return *this;
 	}
 	//!@brief 正規化した値のコピーを取得します
-	[[nodiscard]] const Type nomalized() const noexcept
+	[[nodiscard]] const Vector4Type nomalized() const noexcept
 	{
 		Type len = length();
-		return { xValue / len,yValue / len,zValue / len };
+		return Vector4Type( xValue / len,yValue / len,zValue / len );
 	}
 
 	[[nodiscard]] Vector4Type operator+() const noexcept
 	{
-		return { *this };
+		return *this;
 	}
 	[[nodiscard]] Vector4Type operator-() const noexcept
 	{
-		return { -xValue,-yValue ,-zValue,-wValue };
+		return Vector4Type( -xValue,-yValue ,-zValue,-wValue );
 	}
 	[[nodiscard]] Vector4Type operator+(const Vector4Type& vector4) const noexcept
 	{
-		return { xValue + vector4.xValue,yValue + vector4.yValue ,zValue + vector4.zValue ,wValue + vector4.wValue };
+		return Vector4Type( xValue + vector4.xValue,yValue + vector4.yValue ,zValue + vector4.zValue ,wValue + vector4.wValue );
 	}
 	[[nodiscard]] Vector4Type operator-(const Vector4Type& vector4) const noexcept
 	{
-		return { xValue - vector4.xValue,yValue - vector4.yValue ,zValue * vector4.zValue ,wValue + vector4.wValue };
+		return Vector4Type( xValue - vector4.xValue,yValue - vector4.yValue ,zValue * vector4.zValue ,wValue + vector4.wValue );
 	}
 	[[nodiscard]] Vector4Type operator*(const Vector4Type& vector4) const noexcept
 	{
-		return { xValue * vector4.xValue,yValue * vector4.yValue ,zValue * vector4.zValue ,wValue + vector4.wValue };
+		return Vector4Type( xValue * vector4.xValue,yValue * vector4.yValue ,zValue * vector4.zValue ,wValue + vector4.wValue );
 	}
 	[[nodiscard]] Vector4Type operator*(const Type& scale) const noexcept
 	{
-		return { xValue * scale,yValue * scale ,zValue * scale ,wValue * scale};
+		return Vector4Type( xValue * scale,yValue * scale ,zValue * scale ,wValue * scale );
 	}
-	[[nodiscard]] Vector4Type operator-(const Vector4Type& vector4) const throw(std::exception)
+	[[nodiscard]] Vector4Type operator/(const Vector4Type& vector4) const noexcept(false)
 	{
 		if (xValue == 0 || yValue == 0 || zValue == 0 || wValue == 0) { throw std::exception("0除算を行いました"); }
-		return { xValue / vector4.xValue,yValue / vector4.yValue,zValue / vector4.zValue ,wValue / vector4.wValue };
+		return Vector4Type( xValue / vector4.xValue,yValue / vector4.yValue,zValue / vector4.zValue ,wValue / vector4.wValue );
 	}
-	[[nodiscard]] Vector4Type operator-(const Type& scale) const throw(std::exception)
+	[[nodiscard]] Vector4Type operator/(const Type& scale) const noexcept(false)
 	{
 		if (xValue == 0 || yValue == 0 || zValue == 0 || wValue == 0) { throw std::exception("0除算を行いました"); }
-		return { xValue / scale,yValue / scale ,zValue / scale , wValue / scale };
+		return Vector4Type( xValue / scale,yValue / scale ,zValue / scale , wValue / scale );
 	}
-	[[nodiscard]] Vector4Type& operator=(const Vector4Type& vector4) const noexcept
+	[[noreturn]] void operator=(const Vector4Type& vector4) noexcept
 	{
 		xValue = vector4.xValue;
 		yValue = vector4.yValue;
 		zValue = vector4.zValue;
-		wValue = vector4.wValue
-		return *this;
+		wValue = vector4.wValue;
 	}
-	[[nodiscard]] Vector3& operator=(const Type& scale) const noexcept
+	[[noreturn]] void operator=(const Type& scale) noexcept
 	{
 		xValue += scale;
 		yValue += scale;
 		zValue += scale;
 		wValue += scale;
-		return *this;
 	}
-	[[nodiscard]] Vector4Type& operator+=(const Vector4Type& vector4) const noexcept
+	[[noreturn]] void operator+=(const Vector4Type& vector4) noexcept
 	{
 		xValue += vector4.xValue;
 		yValue += vector4.yValue;
 		zValue += vector4.zValue;
 		wValue += vector4.wValue;
-		return *this;
 	}
-	[[nodiscard]] Vector4Type& operator-=(const Vector4Type& vector4) const noexcept
+	[[noreturn]] void operator-=(const Vector4Type& vector4) noexcept
 	{
 		xValue -= vector4.xValue;
 		yValue -= vector4.yValue;
-		zValue -= vector4.zValue:
+		zValue -= vector4.zValue;
 		wValue -= vector4.wValue;
-		return *this;
 	}
-	[[nodiscard]] Vector4Type& operator*=(const Vector4Type& vector4) const noexcept
+	[[noreturn]] void operator*=(const Vector4Type& vector4) noexcept
 	{
 		xValue *= vector4.xValue;
 		yValue *= vector4.yValue;
-		zValue *= vector4.zValue:
+		zValue *= vector4.zValue;
 		wValue *= vector4.wValue;
-		return *this;
 	}
-	[[nodiscard]] Vector4Type& operator/=(const Vector4Type& vector4) const throw(std::exception)
+	[[noreturn]] void operator/=(const Vector4Type& vector4) noexcept(false)
 	{
 		if (xValue == 0 || yValue == 0 || zValue == 0 || wValue == 0) { throw std::exception("0除算を行いました"); }
 		xValue /= vector4.xValue;
 		yValue /= vector4.yValue;
-		zValue /= vector4.zValue:
+		zValue /= vector4.zValue;
 		wValue /= vector4.wValue;
-		return *this;
 	}
 	[[nodiscard]] const Type& operator()(const int index) const noexcept
 	{

@@ -3,9 +3,7 @@
 #include <SDL.h>
 #include <iostream>
 #include "src/ECS/ECS.hpp"
-#include <memory>
-#include <map>
-#include <unordered_map>
+#include "src/ComponentSystem/StandardComponents.hpp"
 
 
 
@@ -14,25 +12,6 @@
 //#pragma comment(lib, "SDL2_ttf.lib")
 
 
-
-//int main(int argc, char ** args) {
-//
-//	std::cout << SDL_GetError() << std::endl;
-//
-//	SDL_CreateWindow("title", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 500, 500, 1);
-//	SDL_Init(SDL_INIT_EVERYTHING);
-//
-//	SDL_Delay(3000);
-//
-//	SDL_Quit();
-//
-//	system("pause");
-//	return 0;
-//}
-
-#define SDL_WINDOW_TITLE "SDL2"
-#define SDL_WINDOW_WIDTH (640)
-#define SDL_WINDOW_HEIGHT (360)
 
 /** NOTE: Windows on KVM cannot call direct3D.
 	Then SDL_RENDERER_SOFTWARE will be needed. */
@@ -46,6 +25,8 @@
   do {                                                          \
     std::cerr << #name << ": " << SDL_GetError() << std::endl;  \
   } while (0)
+
+
 
 
 class SDLSystem final: public ECS::ComponentSystem
@@ -62,6 +43,17 @@ public:
 	}
 	[[noreturn]] void initialize() noexcept override
 	{
+		if (!entity->hasComponent<ECS::Screen>())
+		{
+			entity->addComponent<ECS::Screen>();
+		}
+		screen = &entity->getComponent<ECS::Screen>();
+		if (!entity->hasComponent<ECS::Color<Uint8>>())
+		{
+			entity->addComponent<ECS::Color<Uint8>>(0x00, 0xFF, 0xFF);
+		}
+		color = &entity->getComponent<ECS::Color<>>();
+
 		if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 			SDL_PrintError(SDL_Init);
 		}
@@ -74,9 +66,9 @@ public:
 private:
 	[[noreturn]] void createWindow() noexcept
 	{
-		window = SDL_CreateWindow(SDL_WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED,
-			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOW_WIDTH,
-			SDL_WINDOW_HEIGHT, 0);
+		window = SDL_CreateWindow(screen->screenName.c_str(), 
+			SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED, 
+			static_cast<int>(screen->size.xValue),static_cast<int>(screen->size.yValue), SDL_WINDOW_SHOWN);
 		if (window == nullptr) {
 			SDL_PrintError(SDL_CreateWindow);
 			isSuccessCreateWindow = false;
@@ -84,6 +76,13 @@ private:
 		else
 		{
 			isSuccessCreateWindow = true;
+			//get window surface
+			surface = SDL_GetWindowSurface(window);
+			//fill surface white
+			SDL_FillRect(surface, nullptr, SDL_MapRGB(surface->format, 
+				color->value.xValue, color->value.yValue, color->value.zValue));
+			//update surface
+			SDL_UpdateWindowSurface(window);
 		}
 		if (!isSuccessCreateWindow)
 		{
@@ -111,91 +110,27 @@ private:
 	bool isSuccessCreateRenderer;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
+	SDL_Surface* surface;
+	ECS::Screen* screen;
+	ECS::Color<>* color;
 };
 
 
-
-//EntityManagerを管理するシステムです
-class EntitySystemManager final
-{
-	class Singleton final
-	{
-	public:
-		virtual ~Singleton() noexcept final
-		{
-			manager.clear();
-		}
-		//!@brief EntityManagerを登録します
-		[[noreturn]] void regist(const std::string& name, ECS::EntityManager* entityManager) noexcept
-		{
-			std::unique_ptr<ECS::EntityManager> eManager(entityManager);
-			manager[name] = std::move(eManager);
-		}
-		//!@brief EntityManagerを削除します
-		[[noreturn]] void remove(const std::string& name) noexcept
-		{
-			const auto& itr = manager.find(name);
-			if (itr != manager.end())
-			{
-				manager.erase(itr);
-			}
-		}
-		//!@brief EntityManagerを取得します
-		[[nodiscard]] const ECS::EntityManager& getEntityManager(const std::string& name) const noexcept
-		{
-			return *manager.at(name).get();
-		}
-		//!@brief EntityManagerがあるか確認する
-		[[nodiscard]] const bool hasEntityManager(const std::string& name) const noexcept
-		{
-			const auto& itr = manager.find(name);
-			if (itr == manager.end())
-			{
-				return false;
-			}
-			return true;
-		}
-		[[noreturn]] void initialize() noexcept
-		{
-			for (const auto& m : manager)
-			{
-				m.second.get()->initialize();
-			}
-		}
-		[[noreturn]] void update() noexcept
-		{
-			for (const auto& m : manager)
-			{
-				m.second.get()->refresh();
-				m.second.get()->update();
-				m.second.get()->draw2D();
-				m.second.get()->draw3D();
-			}
-		}
-	private:
-		std::unordered_map<std::string, std::unique_ptr<ECS::EntityManager>> manager;
-	};
-public:
-	[[nodiscard]] inline static Singleton& get() noexcept
-	{
-		static std::unique_ptr<Singleton> systemManager
-			= std::make_unique<Singleton>();
-		return *systemManager;
-	}
-};
 
 int main(int /*argc*/, char** /*argv*/)
 {
-	EntitySystemManager::get().initialize();
+	ECS::EntitySystemManager::get().initialize();
 
 	std::unique_ptr<ECS::EntityManager> deviceManager = std::make_unique<ECS::EntityManager>();
 	ECS::Entity* deviceEntity = &deviceManager.get()->addEntity();
+	deviceEntity->addComponent<ECS::Color<>>(0x00,0xFF,0xFF);
+	deviceEntity->addComponent<ECS::Screen>("window", Vector2(1080, 720));
 	deviceEntity->addComponent<SDLSystem>();
-	EntitySystemManager::get().regist("device", deviceManager.get());
+	ECS::EntitySystemManager::get().regist("device", deviceManager.get());
 
 	while(1)
 	{
-		EntitySystemManager::get().update();
+		ECS::EntitySystemManager::get().update();
 	}
 	return 0;
 }

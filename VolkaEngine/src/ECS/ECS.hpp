@@ -13,6 +13,8 @@
 #include <assert.h>
 #include <iostream>
 #include <algorithm>
+#include <memory>
+#include <unordered_map>
 
 namespace ECS
 {
@@ -342,11 +344,81 @@ namespace ECS
 		//}
 	};
 
-	//Entityの原型を作るためのインターフェース
+	//!@class Entityの原型を作るためのインターフェース
 	template<class... Args>
 	class IArcheType
 	{
 	private:
 		virtual ECS::Entity* operator()(Args...) = 0;
+	};
+
+	//!@class EntitySystemManager
+	//!@brief EntityManagerを管理するシステム
+	class EntitySystemManager final
+	{
+		class Singleton final
+		{
+		public:
+			virtual ~Singleton() noexcept final
+			{
+				manager.clear();
+			}
+			//!@brief EntityManagerを登録します
+			[[noreturn]] void regist(const std::string& name, ECS::EntityManager* entityManager) noexcept
+			{
+				std::unique_ptr<ECS::EntityManager> eManager(entityManager);
+				manager[name] = std::move(eManager);
+			}
+			//!@brief EntityManagerを削除します
+			[[noreturn]] void remove(const std::string& name) noexcept
+			{
+				const auto& itr = manager.find(name);
+				if (itr != manager.end())
+				{
+					manager.erase(itr);
+				}
+			}
+			//!@brief EntityManagerを取得します
+			[[nodiscard]] const ECS::EntityManager& getEntityManager(const std::string& name) const noexcept
+			{
+				return *manager.at(name).get();
+			}
+			//!@brief EntityManagerがあるか確認する
+			[[nodiscard]] const bool hasEntityManager(const std::string& name) const noexcept
+			{
+				const auto& itr = manager.find(name);
+				if (itr == manager.end())
+				{
+					return false;
+				}
+				return true;
+			}
+			[[noreturn]] void initialize() noexcept
+			{
+				for (const auto& m : manager)
+				{
+					m.second.get()->initialize();
+				}
+			}
+			[[noreturn]] void update() noexcept
+			{
+				for (const auto& m : manager)
+				{
+					m.second.get()->refresh();
+					m.second.get()->update();
+					m.second.get()->draw2D();
+					m.second.get()->draw3D();
+				}
+			}
+		private:
+			std::unordered_map<std::string, std::unique_ptr<ECS::EntityManager>> manager;
+		};
+	public:
+		[[nodiscard]] inline static Singleton& get() noexcept
+		{
+			static std::unique_ptr<Singleton> systemManager
+				= std::make_unique<Singleton>();
+			return *systemManager;
+		}
 	};
 }
