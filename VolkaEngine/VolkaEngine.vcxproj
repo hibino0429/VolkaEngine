@@ -160,6 +160,8 @@
     <ClCompile Include="src\ECS\ECS.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\ComponentSystem\EngineComponents.hpp" />
+    <ClInclude Include="src\ComponentSystem\Renderer.hpp" />
     <ClInclude Include="src\ComponentSystem\StandardComponents.hpp" />
     <ClInclude Include="src\ECS\ECS.hpp" />
     <ClInclude Include="src\Utility\Vector.hpp" />

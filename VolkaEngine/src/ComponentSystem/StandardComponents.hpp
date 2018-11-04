@@ -90,22 +90,28 @@ namespace ECS
 
 	//!@class Color
 	//!@brief 色を扱います
-	template<typename ColorType = Uint8>
-	struct Color final : public ComponentData
+	template<typename Type>
+	struct ColorType final : public ComponentData
 	{
-		explicit Color() noexcept
-			: value(Vector4Type<ColorType>(0xFF, 0xFF, 0xFF, 0xFF))
+		explicit ColorType() noexcept
 		{}
-		explicit Color(const ColorType r, const ColorType g, const ColorType b, const ColorType a = 0xFF) noexcept
+		explicit ColorType(const Type r, const Type g, const Type b, const Type a) noexcept
 			: value(r, g, b, a)
 		{}
 		//!@brief 色の設定
-		[[noreturn]] void setColor(const Vector4Type<ColorType>& color) noexcept
+		[[noreturn]] void setColor(const Vector4Type<Type>& color) noexcept
 		{
 			value = color;
 		}
-		Vector4Type<ColorType> value;
+		Vector4Type<Type> value;
 	};
+	using Color8 = ColorType<Uint8>;
+	using Color16 = ColorType<Uint16>;
+	using Color32 = ColorType<Uint32>;
+	using Color64 = ColorType<Uint64>;
+	//デフォルトは Uint8
+	using Color = Color8;
+
 	//!@class Counter
 	//!@brief カウントを行います
 	class Counter final : public ComponentSystem

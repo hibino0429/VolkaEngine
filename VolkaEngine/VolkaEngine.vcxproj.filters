@@ -44,5 +44,11 @@
     <ClInclude Include="src\ComponentSystem\StandardComponents.hpp">
       <Filter>ComponentSystem</Filter>
     </ClInclude>
+    <ClInclude Include="src\ComponentSystem\EngineComponents.hpp">
+      <Filter>ComponentSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ComponentSystem\Renderer.hpp">
+      <Filter>ComponentSystem</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

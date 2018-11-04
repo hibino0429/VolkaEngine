@@ -6,8 +6,8 @@
 #include <SDL2_image/SDL_image.h>
 #include "src/ECS/ECS.hpp"
 #include "src/ComponentSystem/StandardComponents.hpp"
-
-
+#include "src/ComponentSystem/EngineComponents.hpp"
+#include "src/ComponentSystem/Renderer.hpp"
 
 #pragma comment(lib, "SDL2_image.lib")
 //#pragma comment(lib, "SDL2_mixer.lib")
@@ -15,13 +15,6 @@
 
 
 
-/** NOTE: Windows on KVM cannot call direct3D.
-	Then SDL_RENDERER_SOFTWARE will be needed. */
-#ifdef NEED_RENDERER_SOFTWARE
-#define SDL_RENDERER_FLAGS (SDL_RENDERER_SOFTWARE)
-#else
-#define SDL_RENDERER_FLAGS (0)
-#endif
 
 #define SDL_PrintError(name)                                    \
   do {                                                          \
@@ -30,103 +23,8 @@
 
 
 
-//!@class SDLSystem
-//!@brief SDLの初期化、終了処理を行います
-class SDLSystem final: public ECS::ComponentSystem
-{
-public:
-	SDLSystem()
-		: window(nullptr), renderer(nullptr)
-	{}
-	virtual ~SDLSystem() noexcept final
-	{
-		SDL_DestroyRenderer(renderer);
-		SDL_DestroyWindow(window);
-		SDL_Quit();
-	}
-	[[noreturn]] void initialize() noexcept override
-	{
-		if (!entity->hasComponent<ECS::Screen>())
-		{
-			entity->addComponent<ECS::Screen>();
-		}
-		screen = &entity->getComponent<ECS::Screen>();
-		if (!entity->hasComponent<ECS::Color<Uint8>>())
-		{
-			entity->addComponent<ECS::Color<Uint8>>(0x00, 0xFF, 0xFF);
-		}
-		color = &entity->getComponent<ECS::Color<>>();
 
-		if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-			SDL_PrintError(SDL_Init);
-		}
-		createWindow();
-		createRenderer();
-	}
-	[[noreturn]] void update() noexcept override
-	{
-		SDL_UpdateWindowSurface(window);
-		surface = SDL_GetWindowSurface(window);
-	}
-	[[noreturn]] void draw2D() noexcept override {}
-	[[noreturn]] void draw3D() noexcept override {}
-private:
-	[[noreturn]] void createWindow() noexcept
-	{
-		window = SDL_CreateWindow(screen->screenName.c_str(), 
-			SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED, 
-			static_cast<int>(screen->size.xValue),static_cast<int>(screen->size.yValue), SDL_WINDOW_SHOWN);
-		if (window == nullptr) {
-			SDL_PrintError(SDL_CreateWindow);
-			isSuccessCreateWindow = false;
-		}
-		else
-		{
-			isSuccessCreateWindow = true;
-			//get window surface
-			surface = SDL_GetWindowSurface(window);
-			//fill surface color
-			SDL_FillRect(surface, nullptr, SDL_MapRGB(surface->format,
-				color->value.xValue, color->value.yValue, color->value.zValue));
-			//update surface
-			SDL_UpdateWindowSurface(window);
-			surface = SDL_GetWindowSurface(window);
-		}
-		if (!isSuccessCreateWindow)
-		{
-			SDL_DestroyWindow(window);
-		}
-	}
-	[[noreturn]] void createRenderer() noexcept
-	{
-		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_FLAGS);
-		if (renderer == nullptr) {
-			SDL_PrintError(SDL_CreateRenderer);
-			isSuccessCreateRenderer = false;
-		}
-		else
-		{
-			isSuccessCreateRenderer = true;
-		}
-		if (!isSuccessCreateRenderer)
-		{
-			SDL_Quit();
-		}
-	}
-public:
-	[[nodiscard]] SDL_Surface& GetSurface() const noexcept
-	{
-		return *surface;
-	}
-private:
-	bool isSuccessCreateWindow;
-	bool isSuccessCreateRenderer;
-	SDL_Window* window;
-	SDL_Renderer* renderer;
-	SDL_Surface* surface;
-	ECS::Screen* screen;
-	ECS::Color<>* color;
-};
+
 
 
 //複数のアセットを管理し、マネージャーの役割も持つ
@@ -165,7 +63,7 @@ class LoadTexture final : public ECS::ComponentSystem
 {
 public:
 	LoadTexture()
-		: path("")
+		: textureSurface(nullptr), window(nullptr)
 	{}
 	LoadTexture(const std::string& filePath)
 	{
@@ -179,22 +77,22 @@ public:
 	}
 	[[noreturn]] void update() noexcept override
 	{
-		SDL_Surface* screen = &sdlSystem->GetSurface();
-		SDL_BlitSurface(textureSurface, nullptr, screen, nullptr);
+		SDL_Surface* surface = &window->GetSurface();
+		SDL_BlitSurface(textureSurface, nullptr, surface, nullptr);
 		
 	}
 	[[noreturn]] void initialize() noexcept override
 	{
-		if (!entity->hasComponent<SDLSystem>())
+		if (!entity->hasComponent<ECS::WindowSystem>())
 		{
-			entity->addComponent<SDLSystem>();
+			entity->addComponent<ECS::WindowSystem>();
 		}
-		sdlSystem = &entity->getComponent<SDLSystem>();
+		window = &entity->getComponent<ECS::WindowSystem>();
 		
 		int imgFlags = IMG_INIT_PNG;
 		int initted = IMG_Init(imgFlags);
 		//initialize png loading
-		if (initted & imgFlags != imgFlags)
+		if ((initted & imgFlags) != imgFlags)
 		{
 			SDL_PrintError(IMG_GetError);
 		}
@@ -207,19 +105,19 @@ public:
 	[[noreturn]] void draw3D() noexcept override {}
 private:
 	//!@brief 画像のサーフェイスの作成
-	[[nodiscard]] SDL_Surface* LoadSurface(const std::string& path) const noexcept
+	[[nodiscard]] SDL_Surface* LoadSurface(const std::string& filePath) const noexcept
 	{
 		//final optimized image
 		SDL_Surface* optimizedSurface = nullptr;
 		//load image path
-		SDL_Surface* loadSurface = IMG_Load(path.c_str());
+		SDL_Surface* loadSurface = IMG_Load(filePath.c_str());
 		if (loadSurface == nullptr)
 		{
 			SDL_PrintError(loadSurface);
 		}
 		else
 		{
-			SDL_Surface* surface = &sdlSystem->GetSurface();
+			SDL_Surface* surface = &window->GetSurface();
 			//convert surface to screen format
 			optimizedSurface = SDL_ConvertSurface(loadSurface, surface->format, 0);
 			if (optimizedSurface == nullptr)
@@ -251,19 +149,74 @@ private:
 	}
 private:
 	SDL_Surface* textureSurface;
-	SDLSystem* sdlSystem;
+	ECS::WindowSystem* window;
 	std::string path;
 };
 
 
 
-class DrawTexture
+
+
+
+class CreateTexture final : public ECS::ComponentSystem
 {
 public:
-
+	[[noreturn]] void initialize() noexcept override
+	{
+		//set texture filtering to linear
+		if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"))
+		{
+			printf_s("Warning: linear texture filtering not enabled");
+		}
+		else
+		{
+			//initialize png loading
+			int imgFlags = IMG_INIT_PNG;
+			int initted = IMG_Init(imgFlags);
+			if ((initted & imgFlags) != imgFlags)
+			{
+				printf_s("SDL_image could not intialized");
+			}
+		}
+		renderer = &entity->getComponent<ECS::RendererSystem>();
+		texList = &entity->getComponent<ECS::AssetTexture>();
+	}
+	[[noreturn]] void update() noexcept override {}
+	[[noreturn]] void draw2D() noexcept override {}
+	[[noreturn]] void draw3D() noexcept override {}
+public:
+	[[nodiscard]] SDL_Texture& process(const std::string& filePath) const noexcept
+	{
+		SDL_Texture* newTexture = nullptr;
+		SDL_Surface* loadSurface = IMG_Load(filePath.c_str());
+		if (loadSurface == nullptr)
+		{
+			SDL_PrintError(loadSurface);
+		}
+		else
+		{
+			newTexture = SDL_CreateTextureFromSurface(&renderer->GetRenderer(), loadSurface);
+			if (newTexture == nullptr)
+			{
+				SDL_PrintError(newTexture);
+			}
+			//old load surface free
+			SDL_FreeSurface(loadSurface);
+		}
+		return *newTexture;
+	}
+	[[noreturn]] void regist(const std::string& name,const std::string& filePath) noexcept
+	{
+		SDL_Texture* texture = &process(filePath);
+		texList->regist(name, texture);
+	}
 private:
-
+	ECS::RendererSystem* renderer;
+	ECS::AssetTexture* texList;
 };
+
+
+
 
 
 
@@ -325,14 +278,34 @@ int main(int /*argc*/, char** /*argv*/)
 	ECS::EntitySystemManager::get().initialize();
 
 	std::unique_ptr<ECS::EntityManager> deviceManager = std::make_unique<ECS::EntityManager>();
-	ECS::EntitySystemManager::get().regist("device", deviceManager);
+	ECS::EntitySystemManager::get().regist("engine", deviceManager);
 
-	ECS::EntityManager* manager = &ECS::EntitySystemManager::get().getEntityManager("device");
+	ECS::EntityManager* manager = &ECS::EntitySystemManager::get().getEntityManager("engine");
 	ECS::Entity* deviceEntity = &manager->addEntity();
-	deviceEntity->addComponent<ECS::Color<>>(0x00,0xFF,0xFF);
+	deviceEntity->addComponent<ECS::Color>((Uint8)0xFF, (Uint8)0xFF, (Uint8)0xFF, (Uint8)0xFF);
 	deviceEntity->addComponent<ECS::Screen>("window", Vector2(1080, 720));
-	deviceEntity->addComponent<SDLSystem>();
-	deviceEntity->addComponent<LoadTexture>("sample.png");
+	deviceEntity->addComponent<ECS::WindowSystem>();
+	deviceEntity->addComponent<ECS::RendererSystem>();
+	deviceEntity->addComponent<ECS::AssetTexture>();
+	deviceEntity->addComponent<CreateTexture>().regist("samp","Resource/test.bmp");
+	deviceEntity->getComponent<CreateTexture>().regist("te", "Resource/sample.png");
+	deviceEntity->addGroup(ENTITY_GROUP::Engine);
+
+	//gameManager
+	std::unique_ptr<ECS::EntityManager> gameManager = std::make_unique<ECS::EntityManager>();
+	ECS::EntitySystemManager::get().regist("game", gameManager);
+	ECS::EntityManager* game = &ECS::EntitySystemManager::get().getEntityManager("game");
+	
+	//rect
+	ECS::Entity* entity = &game->addEntity();
+	entity->addComponent<ECS::Color>().setColor(Vector4Type<Uint8>(0xFF, 0x00, 0x00, 0xFF));
+	entity->addComponent<ECS::GeometryRenderer>(Vector4(50,100,100,50),ECS::GeometryRenderer::Mode::Fill);
+	entity->addComponent<ECS::DrawTexture>("te").setRect(Vector4(0,0,128,128),Vector4(0,0,640,480));
+
+	//renderer (最後でないとバグる)
+	ECS::Entity* render = &game->addEntity();
+	render->addComponent<ECS::Renderer>();
+	render->addGroup(ENTITY_GROUP::Engine);
 
 	InputSystem input;
 	while(1)
