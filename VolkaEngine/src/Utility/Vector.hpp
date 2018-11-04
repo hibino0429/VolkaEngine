@@ -1,7 +1,7 @@
 //---------------------------------------------------------
 //!@file Vector.hpp
 //!@brief Vectorを扱います
-//!@author OxthLy
+//!@author Volka
 //!@date 2018/11/3
 //!@note Vector2Type,Vector3,Vector4Type　など
 //!@note 参考URL https://github.com/tonarinohito/MyGameTemplate/blob/master/gameTemple/src/Utility/Vec.hpp 
@@ -35,7 +35,7 @@ public:
 		return Vector2Type( xValue + offsetX,yValue + offsetY );
 	}
 	//!@brief　オフセットした値を取得します
-	[[nodiscard]] const Vector2Type& offset(const Type offsetX, const Type offsetY) const noexcept
+	[[noreturn]] void offset(const Type offsetX, const Type offsetY) const noexcept
 	{
 		xValue += offsetX;
 		yValue += offsetY;
@@ -208,12 +208,11 @@ public:
 		return Vector3Type( xValue + offsetX,yValue + offsetY ,zValue + offsetZ );
 	}
 	//!@brief　オフセットした値を取得します
-	[[nodiscard]] const Vector3Type& offset(const Type offsetX, const Type offsetY,const Type offsetZ) const noexcept
+	[[noreturn]] void offset(const Type offsetX, const Type offsetY,const Type offsetZ) noexcept
 	{
 		xValue += offsetX;
 		yValue += offsetY;
 		zValue += offsetZ;
-		return *this;
 	}
 	//!@brief 値を0にします
 	[[noreturn]] void zero() const noexcept

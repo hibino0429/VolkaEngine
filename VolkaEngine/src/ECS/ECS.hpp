@@ -1,7 +1,7 @@
 //---------------------------------------------------------
 //!@file ECS.hpp
 //!@brief EntityComponentSystem‚ÌÀ‘Ô‚Å‚·B
-//!@author OxthLy
+//!@author Volka
 //!@date 2018/11/3
 //!@note QlŒ³ https ://github.com/SuperV1234/Tutorials
 //---------------------------------------------------------
@@ -364,10 +364,9 @@ namespace ECS
 				manager.clear();
 			}
 			//!@brief EntityManager‚ğ“o˜^‚µ‚Ü‚·
-			[[noreturn]] void regist(const std::string& name, ECS::EntityManager* entityManager) noexcept
+			[[noreturn]] void regist(const std::string& name, std::unique_ptr<ECS::EntityManager>& entityManager) noexcept
 			{
-				std::unique_ptr<ECS::EntityManager> eManager(entityManager);
-				manager[name] = std::move(eManager);
+				manager[name] = std::move(entityManager);
 			}
 			//!@brief EntityManager‚ğíœ‚µ‚Ü‚·
 			[[noreturn]] void remove(const std::string& name) noexcept
@@ -379,7 +378,7 @@ namespace ECS
 				}
 			}
 			//!@brief EntityManager‚ğæ“¾‚µ‚Ü‚·
-			[[nodiscard]] const ECS::EntityManager& getEntityManager(const std::string& name) const noexcept
+			[[nodiscard]] ECS::EntityManager& getEntityManager(const std::string& name) const noexcept
 			{
 				return *manager.at(name).get();
 			}
