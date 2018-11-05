@@ -14,49 +14,12 @@
 //#pragma comment(lib, "SDL2_ttf.lib")
 
 
-
-
 #define SDL_PrintError(name)                                    \
   do {                                                          \
     std::cerr << #name << ": " << SDL_GetError() << std::endl;  \
   } while (0)
 
 
-
-
-
-
-
-//複数のアセットを管理し、マネージャーの役割も持つ
-template<typename KeyType, typename ValueType>
-class AssetManager
-{
-public:
-	class Singleton
-	{
-	public:
-		void regist(const KeyType& key, const ValueType& value)
-		{
-			assetList[key] = value;
-		}
-		void remove(const KeyType& key)
-		{
-			auto& itr = assetList.find();
-			if (itr != assetList.end())
-			{
-				assetList.erase(itr);
-			}
-		}
-	private:
-		std::unordered_map<KeyType, ValueType> assetList;
-	};
-	inline static const Singleton& Get()
-	{
-		static std::unique_ptr<Singleton> asset
-			= std::make_unique<Singleton>();
-		return *asset;
-	}
-};
 
 
 class LoadTexture final : public ECS::ComponentSystem
@@ -155,9 +118,6 @@ private:
 
 
 
-
-
-
 class CreateTexture final : public ECS::ComponentSystem
 {
 public:
@@ -178,13 +138,15 @@ public:
 				printf_s("SDL_image could not intialized");
 			}
 		}
+		colorKey = false;
+		colorData = Vector3(1, 1, 1);
 		renderer = &entity->getComponent<ECS::RendererSystem>();
 		texList = &entity->getComponent<ECS::AssetTexture>();
 	}
 	[[noreturn]] void update() noexcept override {}
 	[[noreturn]] void draw2D() noexcept override {}
 	[[noreturn]] void draw3D() noexcept override {}
-public:
+private:
 	[[nodiscard]] SDL_Texture& process(const std::string& filePath) const noexcept
 	{
 		SDL_Texture* newTexture = nullptr;
@@ -195,6 +157,10 @@ public:
 		}
 		else
 		{
+			//color key image
+			SDL_SetColorKey(loadSurface, colorKey, SDL_MapRGB(loadSurface->format, 
+				(Uint8)colorData.xValue, (Uint8)colorData.yValue, (Uint8)colorData.zValue));
+			//create texture from surface pixels
 			newTexture = SDL_CreateTextureFromSurface(&renderer->GetRenderer(), loadSurface);
 			if (newTexture == nullptr)
 			{
@@ -205,17 +171,43 @@ public:
 		}
 		return *newTexture;
 	}
+public:
+	//!@brief [name]をkeyとして[filePath]を登録する
 	[[noreturn]] void regist(const std::string& name,const std::string& filePath) noexcept
 	{
 		SDL_Texture* texture = &process(filePath);
+		registName = name;
 		texList->regist(name, texture);
+	}
+	//!@brief カラーキーイングを設定(背景が透明な画像などに使用)
+	[[noreturn]] void setColorKey(const bool isColorKey,const Vector3& color)
+	{
+		colorKey = isColorKey;
+		colorData = color;
+	}
+	//!@brief textureの色を乗算します
+	[[noreturn]] void setMultiColor(const Vector3& multiColor)
+	{
+		SDL_SetTextureColorMod(texList->getTexture(registName),
+			static_cast<Uint8>(multiColor.xValue), static_cast<Uint8>(multiColor.yValue), static_cast<Uint8>(multiColor.zValue));
+	}
+	//!@brief 登録した[key]を取得する
+	[[nodiscard]] const ECS::AssetTexture::KeyTypeData& getKey() const noexcept
+	{
+		return registName;
+	}
+	//!@brief 登録した[key]の[value]を取得する
+	[[nodiscard]] const ECS::AssetTexture::ValueTypeData& getValue() const noexcept
+	{
+		return texList->getTexture(registName);
 	}
 private:
 	ECS::RendererSystem* renderer;
 	ECS::AssetTexture* texList;
+	bool colorKey = false;
+	std::string registName;
+	Vector3 colorData;
 };
-
-
 
 
 
@@ -271,6 +263,10 @@ private:
 	bool pushFlag = false;
 };
 
+namespace ECS
+{
+	
+}
 
 
 int main(int /*argc*/, char** /*argv*/)
@@ -289,6 +285,7 @@ int main(int /*argc*/, char** /*argv*/)
 	deviceEntity->addComponent<ECS::AssetTexture>();
 	deviceEntity->addComponent<CreateTexture>().regist("samp","Resource/test.bmp");
 	deviceEntity->getComponent<CreateTexture>().regist("te", "Resource/sample.png");
+	deviceEntity->getComponent<CreateTexture>().regist("anim", "Resource/anim.png");
 	deviceEntity->addGroup(ENTITY_GROUP::Engine);
 
 	//gameManager
@@ -300,7 +297,10 @@ int main(int /*argc*/, char** /*argv*/)
 	ECS::Entity* entity = &game->addEntity();
 	entity->addComponent<ECS::Color>().setColor(Vector4Type<Uint8>(0xFF, 0x00, 0x00, 0xFF));
 	entity->addComponent<ECS::GeometryRenderer>(Vector4(50,100,100,50),ECS::GeometryRenderer::Mode::Fill);
-	entity->addComponent<ECS::DrawTexture>("te").setRect(Vector4(0,0,128,128),Vector4(0,0,640,480));
+	entity->addComponent<ECS::DrawTexture>("anim").setRect(Vector4(0,0,128,128),Vector4(0,0,192,192));
+	entity->addComponent<ECS::BlendMode>(ECS::BlendMode::Mode::AlphaBlend,128);
+	entity->addComponent<ECS::SpriteSheetRenderer>(120, 5);
+	entity->addComponent<ECS::RotationTexture>(-30.0f, Vector2(0, 0));
 
 	//renderer (最後でないとバグる)
 	ECS::Entity* render = &game->addEntity();
